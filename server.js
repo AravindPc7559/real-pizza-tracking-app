@@ -9,6 +9,7 @@ const mongoose = require("mongoose")
 const session = require("express-session")
 const flash  = require("express-flash")
 var MongoDbStore = require('connect-mongodb-session')(session);
+const passport = require("passport");
 
 
 // Database connection
@@ -17,6 +18,9 @@ console.log("database connected")
 }).catch((err)=>{
     console.log("'error")
 })
+
+
+
 
 // session store..
 let  mongoStore = new MongoDbStore({
@@ -35,18 +39,28 @@ app.use(session({
     cookie: { maxAge: 1000 * 60 * 60 * 24 } // 24 hour
 }))
 
+// Passport config
+const passportInit = require('./app/config/passport')
+passportInit(passport)
+app.use(passport.initialize())
+app.use(passport.session())
+
 app.use(flash())
 
 //assets
 app.use(express.static('public'))
+app.use(express.urlencoded({extended: false}));
 app.use(express.json())
 
 
 //global middleware..
 app.use((req,res,next)=>{
-res.locals.session = req.session
+    res.locals.session = req.session
+    res.locals.user = req.user
 next()
 })
+
+
 //set template engine
 app.use(expressLayout)
 app.set('views',path.join(__dirname,'/resources/views'))
